@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bond Filters - Example Response</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f7fc;
+            color: #333;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-container {
+            background-color: #ffffff;
+            max-width: 1450px;
+            margin: 10px auto;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-container label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+
+        .form-container input, .form-container select {
+            width: 100%;
+            padding: 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            grid-column: 1 / -1;
+            justify-self: center;
+            margin-top: 8px;
+        }
+
+        .form-container button:hover {
+            background-color: #27ae60;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .full-width-filter {
+            margin-bottom: 8px;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        table th {
+            position: sticky;
+            top: 0;
+            background-color: #2980b9;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+            z-index: 10;
+        }
+
+        table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .pagination a {
+            text-decoration: none;
+            color: white;
+            background-color: #3498db;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .pagination a:hover {
+            background-color: #2980b9;
+        }
+
+        .auto-refresh-message {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            padding: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px dashed #dee2e6;
+        }
+
+        .example-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+
+<div class="example-note" style="text-align: center;">
+    <strong>Note:</strong> This is a just simple example of HTML response for Swagger documentation.
+</div>
+
+<!-- Main content -->
+<div id="mainContent">
+    <h5 style="text-align: center; margin: 10px 0;">The web page provides information about some bonds allocated on Moscow exchange market,
+        based on chosen filter's parameters</h5>
+    <h5 style="color: red; text-align: center; margin: 10px 0;">The information provided by this web page isn't financial
+        advice (NFA), and the author is not responsible for any actions you take based on it !!!</h5>
+
+    <!-- Filters -->
+    <div class="form-container">
+        <h1 style="margin: 5px 0 10px 0; text-align: center;">Bonds Filters</h1>
+        <h5 style="color: mediumslateblue; text-align: center; margin: 5px 0 15px 0;">
+            (data was updated: 2026-02-06 14:28:15 by Msk time)
+        </h5>
+
+        <!-- Auto-refresh message -->
+        <div class="auto-refresh-message">
+            <p>Page will auto-refresh in <span id="refreshCountdown">5</span> seconds to show new bond data.</p>
+            <p style="color: indianred;">When all data will be loaded, this message disappears!!! (Usually it takes about 5 minutes)</p>
+        </div>
+
+        <form action="/bonds/list" method="get" accept-charset="UTF-8">
+            <!-- First line - single filter stretching full width -->
+            <div class="full-width-filter">
+                <div>
+                    <label for="couponRateNoLessThan">Coupon rate no less than, %:</label>
+                    <input type="number" step="0.05" id="couponRateNoLessThan" name="couponRateNoLessThan" value="7.5"/>
+                </div>
+            </div>
+
+            <!-- Next lines - 3 parameters per line -->
+            <div class="filter-row">
+                <!-- Line 1 -->
+                <div>
+                    <label for="placingUntilDate">Placement period up to:</label>
+                    <input type="date" id="placingUntilDate" name="placingUntilDate" value="2025-12-31"/>
+                </div>
+                <div>
+                    <label for="isQualifiedInvestors">Qualified investors:</label>
+                    <select id="isQualifiedInvestors" name="isQualifiedInvestors">
+                        <option value="">All</option>
+                        <option value="NO" selected>No</option>
+                        <option value="YES">Yes</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="currency">Currency:</label>
+                    <select id="currency" name="currency">
+                        <option value="">All</option>
+                        <option value="SUR" selected>SUR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="JPY">JPY</option>
+                        <option value="CNY">CNY</option>
+                        <option value="INR">INR</option>
+                        <option value="AUD">AUD</option>
+                        <option value="CHF">CHF</option>
+                        <option value="CAD">CAD</option>
+                        <option value="BRL">BRL</option>
+                        <option value="MXN">MXN</option>
+                        <option value="ZAR">ZAR</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <!-- Line 2 -->
+                <div>
+                    <label for="couponFrequency">Frequency of coupon payments:</label>
+                    <select id="couponFrequency" name="couponFrequency">
+                        <option value="">All</option>
+                        <option value="TWICE A YEAR" selected>Twice a Year</option>
+                        <option value="EVERY MONTH">Every Month</option>
+                        <option value="ONCE A QUARTER">Once a Quarter</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="typeOfCouponValue">Coupon type:</label>
+                    <select id="typeOfCouponValue" name="typeOfCouponValue">
+                        <option value="">All</option>
+                        <option value="FIX" selected>Fixed</option>
+                        <option value="FLOAT">Floating</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="creditRatingOfCompany">Company credit rating:</label>
+                    <select id="creditRatingOfCompany" name="creditRatingOfCompany">
+                        <option value="">All</option>
+                        <option value="HIGH" selected>High</option>
+                        <option value="AVERAGE">Average</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <!-- Line 3 -->
+                <div>
+                    <label for="listLevel">MOEX's list level:</label>
+                    <select id="listLevel" name="listLevel">
+                        <option value="">All</option>
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="isSubordination">Subordination:</label>
+                    <select id="isSubordination" name="isSubordination">
+                        <option value="">All</option>
+                        <option value="NO" selected>No</option>
+                        <option value="YES">Yes</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="isAmortization">Amortization:</label>
+                    <select id="isAmortization" name="isAmortization">
+                        <option value="">All</option>
+                        <option value="NO" selected>No</option>
+                        <option value="YES">Yes</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Filter Bonds</button>
+        </form>
+    </div>
+
+    <br>
+
+    <!-- Bonds table -->
+    <div id="bondsTableContainer">
+        <!-- Bonds table with example data -->
+        <div>
+            <div style="text-align: center; margin: 15px 0;">
+                <h2>Filtered Bonds (141 found)</h2>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <a href="/bonds/list?page=0&amp;size=50" style="opacity: 0.5; cursor: not-allowed;">Previous</a>
+                <span>Page 1 of 3</span>
+                <a href="/bonds/list?page=2&amp;size=50">Next</a>
+            </div>
+
+            <!-- Bonds table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>name</th>
+                        <th>board id</th>
+                        <th>initial price</th>
+                        <th>current price</th>
+                        <th>coupon value</th>
+                        <th>coupon value, %</th>
+                        <th>currency</th>
+                        <th>coupon payment date</th>
+                        <th>payments left</th>
+                        <th>annual payment frequency</th>
+                        <th>accrued coupon value</th>
+                        <th>offer date</th>
+                        <th>yield to offer date, %<br><small style="color: red;">*can be extra conditions!</small></th>
+                        <th>buyback date</th>
+                        <th>yield to buyback, %<br><small style="color: red;">*can be extra conditions!</small></th>
+                        <th>maturity date</th>
+                        <th>yield to maturity, %<br><small style="color: red;">*can be extra conditions!</small></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Example Bond 1 -->
+                    <tr>
+                        <td>ОФЗ-26240 (RU000A0JXRW5)</td>
+                        <td>TQOB</td>
+                        <td>1000.00</td>
+                        <td>980.50</td>
+                        <td>75.00</td>
+                        <td>7.50</td>
+                        <td>SUR</td>
+                        <td>21.02.2026</td>
+                        <td>46</td>
+                        <td>2</td>
+                        <td>12.16</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>13.12.2027</td>
+                        <td>32.07</td>
+                        <td>02.12.2029</td>
+                        <td>8.15</td>
+                    </tr>
+                    <!-- Example Bond 2 -->
+                    <tr>
+                        <td>Газпром-04 (RU000A0JXRB3)</td>
+                        <td>TQCB</td>
+                        <td>1000.00</td>
+                        <td>995.25</td>
+                        <td>68.00</td>
+                        <td>9.80</td>
+                        <td>SUR</td>
+                        <td>18.02.2026</td>
+                        <td>50</td>
+                        <td>4</td>
+                        <td>8.92</td>
+                        <td>08.05.2028</td>
+                        <td>7.25</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>29.03.2030</td>
+                        <td>7.42</td>
+                    </tr>
+                    <!-- Example Bond 3 -->
+                    <tr>
+                        <td>СберБ-1Р-02 (RU000A105TL3)</td>
+                        <td>TQIR</td>
+                        <td>1000.00</td>
+                        <td>1012.75</td>
+                        <td>82.50</td>
+                        <td>8.25</td>
+                        <td>SUR</td>
+                        <td>15.03.2026</td>
+                        <td>38</td>
+                        <td>12</td>
+                        <td>15.30</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>20.11.2028</td>
+                        <td>9.12</td>
+                        <td>15.09.2031</td>
+                        <td>8.85</td>
+                    </tr>
+                    <!-- Example Bond 4 -->
+                    <tr>
+                        <td>ВТБ-1Р-05 (RU000A106QE8)</td>
+                        <td>TQDB</td>
+                        <td>1000.00</td>
+                        <td>988.90</td>
+                        <td>91.00</td>
+                        <td>9.10</td>
+                        <td>SUR</td>
+                        <td>28.02.2026</td>
+                        <td>42</td>
+                        <td>2</td>
+                        <td>10.45</td>
+                        <td>15.08.2027</td>
+                        <td>8.95</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>28.02.2032</td>
+                        <td>9.25</td>
+                    </tr>
+                    <!-- Example Bond 5 -->
+                    <tr>
+                        <td>Роснефть-02 (RU000A107TM1)</td>
+                        <td>TQOB</td>
+                        <td>1000.00</td>
+                        <td>1005.60</td>
+                        <td>77.50</td>
+                        <td>7.75</td>
+                        <td>USD</td>
+                        <td>10.04.2026</td>
+                        <td>34</td>
+                        <td>2</td>
+                        <td>9.80</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>05.10.2029</td>
+                        <td>8.15</td>
+                        <td>10.04.2033</td>
+                        <td>7.95</td>
+                    </tr>
+                    <!-- Example Bond 6 -->
+                    <tr>
+                        <td>АФК Система-03 (RU000A108QE5)</td>
+                        <td>TQCB</td>
+                        <td>1000.00</td>
+                        <td>972.30</td>
+                        <td>105.00</td>
+                        <td>10.50</td>
+                        <td>SUR</td>
+                        <td>05.05.2026</td>
+                        <td>28</td>
+                        <td>4</td>
+                        <td>18.75</td>
+                        <td>20.12.2027</td>
+                        <td>11.25</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>05.05.2030</td>
+                        <td>10.85</td>
+                    </tr>
+                    <!-- Example Bond 7 -->
+                    <tr>
+                        <td>Лукойл-1Р-01 (RU000A109TL9)</td>
+                        <td>TQIR</td>
+                        <td>1000.00</td>
+                        <td>1018.40</td>
+                        <td>63.50</td>
+                        <td>8.35</td>
+                        <td>EUR</td>
+                        <td>22.06.2026</td>
+                        <td>52</td>
+                        <td>1</td>
+                        <td>5.20</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>15.03.2031</td>
+                        <td>6.85</td>
+                        <td>22.06.2035</td>
+                        <td>6.45</td>
+                    </tr>
+                    <!-- Example Bond 8 -->
+                    <tr>
+                        <td>МГТС-02 (RU000A10AHU1)</td>
+                        <td>TQDB</td>
+                        <td>1000.00</td>
+                        <td>N/A</td>
+                        <td>271.20</td>
+                        <td>27.12</td>
+                        <td>SUR</td>
+                        <td>21.02.2026</td>
+                        <td>12</td>
+                        <td>1</td>
+                        <td>33.00</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>13.12.2027</td>
+                        <td>32.07</td>
+                        <td>02.12.2029</td>
+                        <td>N/A</td>
+                    </tr>
+                    <!-- Example Bond 9 -->
+                    <tr>
+                        <td>РЖД-1Р-04 (RU000A10BGES1)</td>
+                        <td>TQOB</td>
+                        <td>1000.00</td>
+                        <td>N/A</td>
+                        <td>263.00</td>
+                        <td>26.30</td>
+                        <td>SUR</td>
+                        <td>18.02.2026</td>
+                        <td>12</td>
+                        <td>1</td>
+                        <td>32.00</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>08.05.2028</td>
+                        <td>N/A</td>
+                        <td>29.03.2030</td>
+                        <td>N/A</td>
+                    </tr>
+                    <!-- Example Bond 10 -->
+                    <tr>
+                        <td>АЛРОСА-03 (RU000A10CHTM3)</td>
+                        <td>TQCB</td>
+                        <td>1000.00</td>
+                        <td>1002.10</td>
+                        <td>88.50</td>
+                        <td>8.85</td>
+                        <td>SUR</td>
+                        <td>30.07.2026</td>
+                        <td>44</td>
+                        <td>4</td>
+                        <td>11.25</td>
+                        <td>25.09.2028</td>
+                        <td>9.35</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>30.07.2032</td>
+                        <td>9.05</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const refreshCountdownEl = document.getElementById('refreshCountdown');
+        if (refreshCountdownEl) {
+            let seconds = 5;
+            const timer = setInterval(() => {
+                seconds--;
+                refreshCountdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                }
+            }, 1000);
+        }
+    });
+</script>
+
+</body>
+</html>
