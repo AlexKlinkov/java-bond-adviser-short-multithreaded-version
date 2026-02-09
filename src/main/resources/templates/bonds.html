@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Bond Filters</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Auto-refresh while loading and data isn't prepared or
+                                                auto refresh each the adjusted time interval in BondAdvisorService -->
+    <meta http-equiv="refresh" content="5" th:if="${isLoading != null and isLoading} or ${isOverTime != null and isOverTime}">
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f7fc;
+            color: #333;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .form-container {
+            background-color: #ffffff;
+            max-width: 1450px;
+            margin: 10px auto;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-container label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+
+        .form-container input, .form-container select {
+            width: 100%;
+            padding: 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            grid-column: 1 / -1;
+            justify-self: center;
+            margin-top: 8px;
+        }
+
+        .form-container button:hover {
+            background-color: #27ae60;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .full-width-filter {
+            margin-bottom: 8px;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        table th {
+            position: sticky;
+            top: 0;
+            background-color: #2980b9;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+            z-index: 10;
+        }
+
+        table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .no-bonds {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #e74c3c;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .pagination a {
+            text-decoration: none;
+            color: white;
+            background-color: #3498db;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .pagination a:hover {
+            background-color: #2980b9;
+        }
+
+        .auto-refresh-message {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            padding: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px dashed #dee2e6;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Main content - ALWAYS visible -->
+<div id="mainContent">
+    <h5 style="text-align: center; margin: 10px 0;">The web page provides information about some bonds allocated on
+        Moscow exchange market,
+        based on chosen filter's parameters</h5>
+    <h5 style="color: red; text-align: center; margin: 10px 0;">The information provided by this web page isn't
+        financial
+        advice (NFA), and the author is not responsible for any actions you take based on it !!!</h5>
+
+    <!-- Filters - ALWAYS visible -->
+    <div class="form-container">
+        <h1 style="margin: 5px 0 10px 0; text-align: center;">Bonds Filters</h1>
+        <h5 style="color: mediumslateblue; text-align: center; margin: 5px 0 15px 0;"
+            th:text="'(data was updated: ' + (${dateWhenDataWasUpdated != null ? dateWhenDataWasUpdated : 'N/A'}) + ' by Msk time)'">
+        </h5>
+
+        <!-- Auto-refresh message moved HERE -->
+        <div class="auto-refresh-message" th:if="${isLoading}">
+            <p>Page will auto-refresh in <span id="refreshCountdown">5</span> seconds to show new bond data.</p>
+            <p style="color: indianred;">When all data will be loaded, this message disappears!!! (Usually it takes about 5 minutes)</p>
+        </div>
+
+        <form th:action="@{/bonds/list}" method="get" accept-charset="UTF-8">
+            <!-- First line - single filter stretching full width -->
+            <div class="full-width-filter">
+                <div>
+                    <label for="couponRateNoLessThan">Coupon rate no less than, %:</label>
+                    <input type="number" step="0.05" id="couponRateNoLessThan" name="couponRateNoLessThan"
+                           th:value="${param.couponRateNoLessThan == null || param.couponRateNoLessThan == 0
+                               || param.couponRateNoLessThan == 0.0
+                               || param.couponRateNoLessThan == 0.00 ? null : param.couponRateNoLessThan}"/>
+                </div>
+            </div>
+
+            <!-- Next lines - 3 parameters per line -->
+            <div class="filter-row">
+                <!-- Line 1 -->
+                <div>
+                    <label for="placingUntilDate">Placement period up to:</label>
+                    <input type="date" id="placingUntilDate" name="placingUntilDate"
+                           th:value="${param.placingUntilDate}"/>
+                </div>
+                <div>
+                    <label for="isQualifiedInvestors">Qualified investors:</label>
+                    <select id="isQualifiedInvestors" name="isQualifiedInvestors">
+                        <option value=""
+                                th:selected="${param.isQualifiedInvestors == null || param.isQualifiedInvestors == ''}">
+                            All
+                        </option>
+                        <option value="NO" th:selected="${'NO'.equals(#strings.trim(param.isQualifiedInvestors))}">No
+                        </option>
+                        <option value="YES" th:selected="${'YES'.equals(#strings.trim(param.isQualifiedInvestors))}">
+                            Yes
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label for="currency">Currency:</label>
+                    <select id="currency" name="currency">
+                        <option value="" th:selected="${param.currency == null || param.currency == ''}">All</option>
+                        <option value="SUR" th:selected="${'SUR'.equals(#strings.trim(param.currency))}">SUR</option>
+                        <option value="USD" th:selected="${'USD'.equals(#strings.trim(param.currency))}">USD</option>
+                        <option value="EUR" th:selected="${'EUR'.equals(#strings.trim(param.currency))}">EUR</option>
+                        <option value="GBP" th:selected="${'GBP'.equals(#strings.trim(param.currency))}">GBP</option>
+                        <option value="JPY" th:selected="${'JPY'.equals(#strings.trim(param.currency))}">JPY</option>
+                        <option value="CNY" th:selected="${'CNY'.equals(#strings.trim(param.currency))}">CNY</option>
+                        <option value="INR" th:selected="${'INR'.equals(#strings.trim(param.currency))}">INR</option>
+                        <option value="AUD" th:selected="${'AUD'.equals(#strings.trim(param.currency))}">AUD</option>
+                        <option value="CHF" th:selected="${'CHF'.equals(#strings.trim(param.currency))}">CHF</option>
+                        <option value="CAD" th:selected="${'CAD'.equals(#strings.trim(param.currency))}">CAD</option>
+                        <option value="BRL" th:selected="${'BRL'.equals(#strings.trim(param.currency))}">BRL</option>
+                        <option value="MXN" th:selected="${'MXN'.equals(#strings.trim(param.currency))}">MXN</option>
+                        <option value="ZAR" th:selected="${'ZAR'.equals(#strings.trim(param.currency))}">ZAR</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <!-- Line 2 -->
+                <div>
+                    <label for="couponFrequency">Frequency of coupon payments:</label>
+                    <select id="couponFrequency" name="couponFrequency">
+                        <option value="" th:selected="${param.couponFrequency == null || param.couponFrequency == ''}">
+                            All
+                        </option>
+                        <option value="TWICE A YEAR"
+                                th:selected="${'TWICE A YEAR'.equals(#strings.trim(param.couponFrequency))}">Twice a
+                            Year
+                        </option>
+                        <option value="EVERY MONTH"
+                                th:selected="${'EVERY MONTH'.equals(#strings.trim(param.couponFrequency))}">Every Month
+                        </option>
+                        <option value="ONCE A QUARTER"
+                                th:selected="${'ONCE A QUARTER'.equals(#strings.trim(param.couponFrequency))}">Once a
+                            Quarter
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label for="typeOfCouponValue">Coupon type:</label>
+                    <select id="typeOfCouponValue" name="typeOfCouponValue">
+                        <option value=""
+                                th:selected="${param.typeOfCouponValue == null || param.typeOfCouponValue == ''}">All
+                        </option>
+                        <option value="FIX" th:selected="${'FIX'.equals(#strings.trim(param.typeOfCouponValue))}">
+                            Fixed
+                        </option>
+                        <option value="FLOAT" th:selected="${'FLOAT'.equals(#strings.trim(param.typeOfCouponValue))}">
+                            Floating
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label for="creditRatingOfCompany">Company credit rating:</label>
+                    <select id="creditRatingOfCompany" name="creditRatingOfCompany">
+                        <option value=""
+                                th:selected="${param.creditRatingOfCompany == null || param.creditRatingOfCompany == ''}">
+                            All
+                        </option>
+                        <option value="HIGH" th:selected="${'HIGH'.equals(#strings.trim(param.creditRatingOfCompany))}">
+                            High
+                        </option>
+                        <option value="AVERAGE"
+                                th:selected="${'AVERAGE'.equals(#strings.trim(param.creditRatingOfCompany))}">Average
+                        </option>
+                        <option value="LOW" th:selected="${'LOW'.equals(#strings.trim(param.creditRatingOfCompany))}">
+                            Low
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <!-- Line 3 -->
+                <div>
+                    <label for="listLevel">MOEX's list level:</label>
+                    <select id="listLevel" name="listLevel">
+                        <option value="" th:selected="${param.listLevel == null || param.listLevel == ''}">All</option>
+                        <option value="1" th:selected="${'1'.equals(#strings.trim(param.listLevel))}">1</option>
+                        <option value="2" th:selected="${'2'.equals(#strings.trim(param.listLevel))}">2</option>
+                        <option value="3" th:selected="${'3'.equals(#strings.trim(param.listLevel))}">3</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="isSubordination">Subordination:</label>
+                    <select id="isSubordination" name="isSubordination">
+                        <option value="" th:selected="${param.isSubordination == null || param.isSubordination == ''}">
+                            All
+                        </option>
+                        <option value="NO" th:selected="${'NO'.equals(#strings.trim(param.isSubordination))}">No
+                        </option>
+                        <option value="YES" th:selected="${'YES'.equals(#strings.trim(param.isSubordination))}">Yes
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label for="isAmortization">Amortization:</label>
+                    <select id="isAmortization" name="isAmortization">
+                        <option value="" th:selected="${param.isAmortization == null || param.isAmortization == ''}">
+                            All
+                        </option>
+                        <option value="NO" th:selected="${'NO'.equals(#strings.trim(param.isAmortization))}">No</option>
+                        <option value="YES" th:selected="${'YES'.equals(#strings.trim(param.isAmortization))}">Yes
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Filter Bonds</button>
+        </form>
+    </div>
+
+    <br>
+
+    <!-- Bonds table - shows when we have bonds -->
+    <div id="bondsTableContainer">
+        <!-- Show bonds table if we have bonds AND the page has content -->
+        <div th:if="${bonds != null and bonds.totalElements > 0}">
+            <div style="text-align: center; margin: 15px 0;">
+                <h2>Filtered Bonds (<span th:text="${bonds.totalElements}">0</span> found)</h2>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <a th:classappend="${!bonds.hasPrevious()} ? 'disabled'"
+                   th:if="${bonds.hasPrevious()}"
+                   th:href="@{/bonds/list(page=${bonds.number - 1}, size=${bonds.size},
+           couponRateNoLessThan=${param.couponRateNoLessThan},
+           placingUntilDate=${param.placingUntilDate},
+           isQualifiedInvestors=${param.isQualifiedInvestors},
+           currency=${param.currency},
+           couponFrequency=${param.couponFrequency},
+           typeOfCouponValue=${param.typeOfCouponValue},
+           creditRatingOfCompany=${param.creditRatingOfCompany},
+           listLevel=${param.listLevel},
+           isSubordination=${param.isSubordination},
+           isAmortization=${param.isAmortization})}">
+                    Previous
+                </a>
+
+                <span th:text="'Page ' + ${currentPage} + ' of ' + ${totalPages}"></span>
+
+                <a th:classappend="${!bonds.hasNext()} ? 'disabled'"
+                   th:if="${bonds.hasNext()}"
+                   th:href="@{/bonds/list(page=${bonds.number + 1}, size=${bonds.size},
+           couponRateNoLessThan=${param.couponRateNoLessThan},
+           placingUntilDate=${param.placingUntilDate},
+           isQualifiedInvestors=${param.isQualifiedInvestors},
+           currency=${param.currency},
+           couponFrequency=${param.couponFrequency},
+           typeOfCouponValue=${param.typeOfCouponValue},
+           creditRatingOfCompany=${param.creditRatingOfCompany},
+           listLevel=${param.listLevel},
+           isSubordination=${param.isSubordination},
+           isAmortization=${param.isAmortization})}">
+                    Next
+                </a>
+            </div>
+
+            <!-- Bonds table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>name</th>
+                        <th>board id</th>
+                        <th>initial price</th>
+                        <th>current price</th>
+                        <th>coupon value</th>
+                        <th>coupon value, %</th>
+                        <th>currency</th>
+                        <th>coupon payment date</th>
+                        <th>payments left</th>
+                        <th>annual payment frequency</th>
+                        <th>accrued coupon value</th>
+                        <th>offer date</th>
+                        <th>yield to offer date, %<br><small style="color: red;">*can be extra conditions!</small></th>
+                        <th>buyback date</th>
+                        <th>yield to buyback, %<br><small style="color: red;">*can be extra conditions!</small></th>
+                        <th>maturity date</th>
+                        <th>yield to maturity, %<br><small style="color: red;">*can be extra conditions!</small></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="bond : ${bonds.content}">
+                        <td th:text="${#strings.defaultString(bond.bondName, 'N/A')}"></td>
+                        <td th:text="${#strings.defaultString(bond.boardId, 'N/A')}"></td>
+                        <td th:text="${bond.initialBondPrice != null ? bond.initialBondPrice: 'N/A'}"></td>
+                        <td th:text="${bond.currentBondPrice != null ? bond.currentBondPrice : 'N/A'}"></td>
+                        <td th:text="${bond.couponValue != null ? bond.couponValue : 'N/A'}"></td>
+                        <td th:text="${bond.couponPercent != null ? bond.couponPercent : 'N/A'}"></td>
+                        <td th:text="${#strings.defaultString(bond.faceUnit, 'N/A')}"></td>
+                        <td th:text="${#strings.defaultString(bond.couponDate, 'N/A')}"></td>
+                        <td th:text="${bond.remainingNumberOfPayments != null ? bond.remainingNumberOfPayments : 'N/A'}"></td>
+                        <td th:text="${bond.couponFrequency != null ? bond.couponFrequency : 'N/A'}"></td>
+                        <td th:text="${bond.accruedCouponValue != null ? bond.accruedCouponValue : 'N/A'}"></td>
+                        <td th:text="${bond.offerDate != null ? bond.offerDate : 'N/A'}"></td>
+                        <td th:text="${bond.yieldToOfferDate != null ? bond.yieldToOfferDate : 'N/A'}"></td>
+                        <td th:text="${bond.buyBackDate != null ? bond.buyBackDate : 'N/A'}"></td>
+                        <td th:text="${bond.yieldToCallOption != null ? bond.yieldToCallOption : 'N/A'}"></td>
+                        <td th:text="${bond.matDate != null ? bond.matDate : 'N/A'}"></td>
+                        <td th:text="${bond.yieldToMatDate != null ? bond.yieldToMatDate : 'N/A'}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Show message if no bonds at all -->
+        <div th:if="${totalBonds == 0}" class="no-bonds">
+            <div th:if="${isLoading}" class="spinner" style="margin: 20px auto;"></div>
+            <p th:if="${isLoading}">Loading bonds... First results will appear shortly.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const refreshCountdownEl = document.getElementById('refreshCountdown'); // update countdown timer
+
+        if (refreshCountdownEl) {
+            let seconds = 5;
+            const timer = setInterval(() => {
+                seconds--;
+                refreshCountdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                }
+            }, 1000);
+        }
+    });
+</script>
+
+</body>
+</html>
