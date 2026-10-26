@@ -2,6 +2,8 @@
 **⚠️Not for commercial use!**
 ### 1. Description:
 A Spring Boot application that aggregates bond market data, filters it by coupon yield (highest to lowest), and presents it in real-time.
+For work jdk has to containt Russian Trusted...cer: Russian_Trusted_Root_CA.cer, Russian_Trusted_Sub_CA.cer, Russian_Trusted_Sub_CA_2024.cer
+The prepared app version already contains it: [JavaBondAdviserShortMultithreadedVersion](https://github.com/AlexKlinkov/java-bond-adviser-short-multithreaded-version/releases/tag/JavaBondsAdvisorShortMultithreadedVersion_v1.0)
 
 **Key Features:**
 - **Asynchronous Data Processing:** Uses `CompletableFuture` for non-blocking data retrieval
