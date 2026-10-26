@@ -140,31 +140,30 @@ public class TService {
     }
 
     private String getCreditRatingOfCompany(Document document) {
+        // Iterate over all panels inside the SecurityHeader block
+        for (Element panel : document.select("div[data-qa-file=SecurityHeader]")) {
+            // We are looking for the panel whose caption says "Оценка облигации"
+            Element caption = panel.selectFirst("div[class^=SecurityHeader__panelCaption_]");
+            if (caption == null) continue;
 
-        // 1. Parsing creditRatingOfCompany and offerDate (FIRST PART OF WEB PAGE)
-        var onlyCreditRatingOnPage = document.select("div[data-qa-file=SecurityHeader] + " +
-                "div.SecurityHeader__panelText_KDJdO").eq(0).text();
+            String captionText = caption.text().trim();
+            if (!captionText.equals("Оценка облигации") && !captionText.equals("Кредитный рейтинг")) {
+                continue;
+            }
 
-        var offerDateOfCreditRatingOfCompany = document.select("div[data-qa-file=SecurityHeader] + " +
-                "div.SecurityHeader__panelText_KDJdO").eq(1).text();
-
-        String creditRating;
-
-        // 2. Checking offerDate and yieldToCallOption,
-        // coz them impact on index of element, which contains credit rating information
-        if (!onlyCreditRatingOnPage.contains("%") && (!offerDateOfCreditRatingOfCompany.contains("%") ||
-                !offerDateOfCreditRatingOfCompany.contains("."))) {
-            creditRating = document.select("div[data-qa-file=SecurityHeader] div.SecurityHeader__panel" +
-                    "Text_KDJdO").eq(0).text();
-        } else if (!offerDateOfCreditRatingOfCompany.contains(".")) {
-            creditRating = document.select("div[data-qa-file=SecurityHeader] div.SecurityHeader__panel" +
-                    "Text_KDJdO").eq(1).text();
-        } else {
-            creditRating = document.select("div[data-qa-file=SecurityHeader] div.SecurityHeader__panel" +
-                    "Text_KDJdO").eq(2).text();
+            // Inside this panel, grab the div with the panelText class
+            Element valueEl = panel.selectFirst("div[class^=SecurityHeader__panelText_]");
+            if (valueEl != null) {
+                // The value is stored in the title attribute (e.g. title="Низкая")
+                String rating = valueEl.attr("title").trim();
+                if (!rating.isEmpty()) {
+                    return rating;
+                }
+                // If title is empty — fall back to the element text
+                return valueEl.text().trim();
+            }
         }
-
-        return creditRating.trim();
+        return ""; // or null if the rating was not found
     }
 
     private ExtendedBondDetail getCollectedExtendedBondDetail(Elements tableRows, ExtendedBondDetail resultEntity) {
